@@ -19,11 +19,19 @@ def get_response(url, headers=None, params=None):
 
 
 def create_table(statistics, website):
-    table_data = [
-        ['Язык программирования', 'Найдено вакансий', 'Обработано вакансий', 'Средняя зарплата']
-    ]
+    table_data = [[
+        'Язык программирования',
+        'Найдено вакансий',
+        'Обработано вакансий',
+        'Средняя зарплата'
+    ]]
     for language, stats in statistics.items():
-        table_data.append([language, stats['vacancies_found'], stats['vacancies_processed'], stats['average_salary']])
+        table_data.append([
+            language,
+            stats['vacancies_found'],
+            stats['vacancies_processed'],
+            stats['average_salary']]
+        )
     title = f" {website}  Moscow"
     table_instance = AsciiTable(table_data, title)
     table_instance.justify_columns[4] = 'right'
