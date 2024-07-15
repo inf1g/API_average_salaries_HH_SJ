@@ -76,11 +76,11 @@ def predict_rub_salary_for_hh(languages):
             average_salary = 0
         else:
             average_salary = int(sum(salaries_vacancies) / len(salaries_vacancies))
-        lang = {
+        vacancy_statistics[language] = {
             "vacancies_found": vacancies_response['found'],
             "vacancies_processed": vacancies_processed_total,
-            "average_salary": int(average_salary)}
-        vacancy_statistics[language] = lang
+            "average_salary": int(average_salary)
+        }
     return vacancy_statistics
 
 
@@ -114,12 +114,11 @@ def predict_rub_salary_for_sj(languages, api_key):
             average_salary = 0
         else:
             average_salary = int(sum(salaries_vacancies) / len(salaries_vacancies))
-        lang = {
+        vacancy_statistics[language] = {
             "vacancies_found": vacancies_response['total'],
             "vacancies_processed": vacancies_processed_total,
             "average_salary": int(average_salary)
         }
-        vacancy_statistics[language] = lang
     return vacancy_statistics
 
 
