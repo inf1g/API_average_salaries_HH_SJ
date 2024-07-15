@@ -29,20 +29,20 @@ def create_table(statistics, website):
     return table_instance.table
 
 
-def create_statistics(vacancy, salary_from, salary_to, toggle=None):
+def calculate_salary(vacancy, salary_from, salary_to, toggle=None):
     salary = []
-    # for vacancy in vacancies:
     if toggle:
         vacancy = vacancy['salary']
-    if vacancy.get(salary_from) and vacancy.get(salary_to):
-        if vacancy.get(salary_from) != 0 and vacancy.get(salary_to) != 0:
-            salary.append(int((vacancy.get(salary_from) + vacancy.get(salary_to)) / 2))
-    elif vacancy.get(salary_from) and not vacancy.get(salary_to):
-        if vacancy.get(salary_from) != 0 and vacancy.get(salary_to) == 0:
-            salary.append(int(vacancy.get(salary_from) * 1.2))
-    elif vacancy.get(salary_to) and not vacancy.get(salary_from):
-        if vacancy.get(salary_to) != 0 and vacancy.get(salary_from) == 0:
-            salary.append(int(vacancy.get(salary_to) * 0.8))
+    if vacancy:
+        if vacancy.get(salary_from) and vacancy.get(salary_to):
+            if vacancy.get(salary_from) != 0 and vacancy.get(salary_to) != 0:
+                salary.append(int((vacancy.get(salary_from) + vacancy.get(salary_to)) / 2))
+        elif vacancy.get(salary_from) and not vacancy.get(salary_to):
+            if vacancy.get(salary_from) != 0 and vacancy.get(salary_to) == 0:
+                salary.append(int(vacancy.get(salary_from) * 1.2))
+        elif vacancy.get(salary_to) and not vacancy.get(salary_from):
+            if vacancy.get(salary_to) != 0 and vacancy.get(salary_from) == 0:
+                salary.append(int(vacancy.get(salary_to) * 0.8))
     return salary
 
 
@@ -69,16 +69,15 @@ def predict_rub_salary_for_hh(languages):
                     'page': page,
                     'per_page': per_page_vacancies,
                     'period': period_days,
-                    'currency': currency,
-                    'only_with_salary': 'true'
+                    'currency': currency
                 }
                 vacancies_response = get_response(session, url, headers, params)
-                if page >= vacancies_response['pages']:
-                    break
                 for vacancy in vacancies_response['items']:
-                    vacancy_salary = create_statistics(vacancy, 'from', 'to', 1)
-                salaries_vacancies.extend(vacancy_salary)
-                vacancies_processed_total += len(vacancy_salary)
+                    vacancy_salary = calculate_salary(vacancy, 'from', 'to', 1)
+                    salaries_vacancies.extend(vacancy_salary)
+                    vacancies_processed_total += len(vacancy_salary)
+                if page >= vacancies_response['pages'] - 1:
+                    break
             if len(salaries_vacancies) == 0:
                 average_salary = 0
             else:
@@ -111,10 +110,10 @@ def predict_rub_salary_for_sj(languages, api_key):
                     'currency': currency
                 }
                 vacancies_response = get_response(session, url, headers, params)
-                vacancy_page = create_statistics(
-                    vacancies_response['objects'], 'payment_from', 'payment_to')
-                salaries_vacancies.extend(vacancy_page)
-                vacancies_processed_total += len(vacancy_page)
+                for vacancy in vacancies_response['objects']:
+                    vacancy_salary = calculate_salary(vacancy, 'payment_from', 'payment_to')
+                    salaries_vacancies.extend(vacancy_salary)
+                    vacancies_processed_total += len(vacancy_salary)
                 if not vacancies_response['more']:
                     break
             if len(salaries_vacancies) == 0:
