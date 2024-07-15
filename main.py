@@ -23,7 +23,7 @@ def create_table(statistics, website):
     ]
     for language, stats in statistics.items():
         table_data.append([language, stats['vacancies_found'], stats['vacancies_processed'], stats['average_salary']])
-    title = f"{website}  Moscow"
+    title = f" {website}  Moscow"
     table_instance = AsciiTable(table_data, title)
     table_instance.justify_columns[4] = 'right'
     return table_instance.table
@@ -57,6 +57,7 @@ def predict_rub_salary_for_hh(languages):
     currency = 'RUR'
     with Session() as session:
         for language in languages:
+            print(language)
             vacancies_processed_total = 0
             for page in count(0):
                 headers = {
@@ -82,6 +83,8 @@ def predict_rub_salary_for_hh(languages):
                 average_salary = 0
             else:
                 average_salary = int(sum(salaries_vacancies) / len(salaries_vacancies))
+            print(f"{vacancies_response['found']} found")
+            print(f"{vacancies_response['pages']} pages")
             lang = {
                 "vacancies_found": vacancies_response['found'],
                 "vacancies_processed": vacancies_processed_total,
