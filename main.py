@@ -38,32 +38,25 @@ def create_table(statistics, website):
     return table_instance.table
 
 
-def calculate_salary(vacancy, salary_from, salary_to, toggle=None):
-    salary = []
-    if toggle:
-        vacancy = vacancy['salary']
-    if vacancy:
-        if vacancy.get(salary_from) and vacancy.get(salary_to):
-            salary.append(int((vacancy.get(salary_from) + vacancy.get(salary_to)) / 2))
-        elif vacancy.get(salary_from) and not vacancy.get(salary_to):
-            salary.append(int(vacancy.get(salary_from) * 1.2))
-        elif vacancy.get(salary_to) and not vacancy.get(salary_from):
-            salary.append(int(vacancy.get(salary_to) * 0.8))
-    return salary
+def calculate_salary(salary_from, salary_to):
+    if salary_from and salary_to:
+        return int((salary_from + salary_to) / 2)
+    elif salary_from:
+        return int(salary_from * 1.2)
+    elif salary_to:
+        return int(salary_to * 0.8)
 
 
 def predict_rub_salary_for_hh(languages):
     url = "https://api.hh.ru/vacancies"
     vacancy_statistics = {}
-    salaries_vacancies = []
-    vacancies_response = None
     area_moscow = 1
     period_days = 30
     per_page_vacancies = 100
     currency = 'RUR'
     for language in languages:
-        vacancies_processed_total = 0
-        sleep(10)
+        vacancies_salaries = []
+        sleep(5)
         for page in count(0):
             params = {
                 'text': f'Программист {language}',
@@ -75,18 +68,18 @@ def predict_rub_salary_for_hh(languages):
             }
             vacancies_response = get_response(url, params=params)
             for vacancy in vacancies_response['items']:
-                vacancy_salary = calculate_salary(vacancy, 'from', 'to', 1)
-                salaries_vacancies.extend(vacancy_salary)
-                vacancies_processed_total += len(vacancy_salary)
+                if vacancy['salary']:
+                    vacancy_salary = calculate_salary(vacancy['salary']['from'], vacancy['salary']['to'])
+                    vacancies_salaries.append(vacancy_salary)
             if page >= vacancies_response['pages'] - 1:
                 break
-        if len(salaries_vacancies) == 0:
+        if not len(vacancies_salaries):
             average_salary = 0
         else:
-            average_salary = int(sum(salaries_vacancies) / len(salaries_vacancies))
+            average_salary = int(sum(vacancies_salaries) / len(vacancies_salaries))
         vacancy_statistics[language] = {
             "vacancies_found": vacancies_response['found'],
-            "vacancies_processed": vacancies_processed_total,
+            "vacancies_processed": len(vacancies_salaries),
             "average_salary": int(average_salary)
         }
     return vacancy_statistics
@@ -99,9 +92,7 @@ def predict_rub_salary_for_sj(languages, api_key):
     per_page_vacancies = 100
     currency = 'rub'
     for language in languages:
-        salaries_vacancies = []
-        vacancies_response = 0
-        vacancies_processed_total = 0
+        vacancies_salaries = []
         for page in count(0):
             headers = {'X-Api-App-Id': api_key}
             params = {
@@ -113,18 +104,18 @@ def predict_rub_salary_for_sj(languages, api_key):
             }
             vacancies_response = get_response(url, headers, params)
             for vacancy in vacancies_response['objects']:
-                vacancy_salary = calculate_salary(vacancy, 'payment_from', 'payment_to')
-                salaries_vacancies.extend(vacancy_salary)
-                vacancies_processed_total += len(vacancy_salary)
+                if vacancy['payment_from'] or vacancy['payment_to']:
+                    vacancy_salary = calculate_salary(vacancy['payment_from'], vacancy['payment_to'])
+                    vacancies_salaries.append(vacancy_salary)
             if not vacancies_response['more']:
                 break
-        if len(salaries_vacancies) == 0:
+        if not len(vacancies_salaries):
             average_salary = 0
         else:
-            average_salary = int(sum(salaries_vacancies) / len(salaries_vacancies))
+            average_salary = int(sum(vacancies_salaries) / len(vacancies_salaries))
         vacancy_statistics[language] = {
             "vacancies_found": vacancies_response['total'],
-            "vacancies_processed": vacancies_processed_total,
+            "vacancies_processed": len(vacancies_salaries),
             "average_salary": int(average_salary)
         }
     return vacancy_statistics
